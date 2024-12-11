@@ -11,6 +11,14 @@ import geometry_msgs
 
 
 def load_urdf_file(filename):
+    """Load the URDF file and return the transform manager object
+
+    Args:
+        filename (String): name of the file
+
+    Returns:
+        UrdfTransformerManager: The transform manager object
+    """
     tm = UrdfTransformManager()
     with open(filename, "r") as f:
         robot_urdf = f.read()
@@ -18,6 +26,14 @@ def load_urdf_file(filename):
     return tm
 
 def extract_transformation_from_urdf(tm):
+    """Extract the transformation matrix from the URDF file
+
+    Args:
+        tm (UrdfTransformerManager): The transform manager object
+
+    Returns:
+        matrix: transformation matrix
+    """
     T_base_imu = tm.get_transform("base_link_old", "imu_link")
     T_imu_lidar = tm.get_transform("imu_link", "lidar_link")
     T_imu_stereoR = tm.get_transform("imu_link", "stereo_R_link")
@@ -28,6 +44,13 @@ def extract_transformation_from_urdf(tm):
     return T_base_imu, T_imu_lidar, T_imu_stereoR, T_imu_stereoL, T_stereoR_stereoROptical, T_stereoL_stereoLOptical, T_imu_multispectral
 
 def convert_to_tf(T, source, target):
+    """Convert the transformation matrix to tf format and publish it
+
+    Args:
+        T (ndarray): Transformation matrix
+        source (String): Source frame
+        target (String): Target frame
+    """
     
     broadcaster = tf2_ros.StaticTransformBroadcaster()
     static_transformStamped = geometry_msgs.msg.TransformStamped()
