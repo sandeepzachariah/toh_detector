@@ -1,0 +1,4 @@
+<!--Launch file to run the run_rosbag_files.py script-->
+<launch>
+    <node pkg="toh_detector" type="run_rosbag_files.py" name="rosbag_player" output="screen"/>
+</launch>

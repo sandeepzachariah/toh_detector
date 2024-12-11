@@ -1,4 +1,4 @@
-<!--Launch file to run the image_to_pc.py script-->
+<!--Launch file to run the data_association.py script-->
 <launch>
-    <node pkg="toh_detector" type="image_to_pc.py" name="image_to_pc" output="screen"/>
+    <node pkg="toh_detector" type="data_association_2.py" name="image_to_pc" output="screen"/>
 </launch>

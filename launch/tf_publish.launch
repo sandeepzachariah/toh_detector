@@ -1,0 +1,4 @@
+<!--Launch file to run the tf_from_urdf.py script-->
+<launch>
+    <node pkg="toh_detector" type="tf_from_urdf.py" name="tf_static_publisher" output="screen"/>
+</launch>

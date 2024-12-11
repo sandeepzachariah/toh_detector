@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com)
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot name="safeforest_payload_v2">
+
+  <link name="base_link_old">
+    <inertial>
+      <origin xyz="-0.0123923145897826 0.00200539275132347 0.0307855718767688" rpy="0 0 0" />
+      <mass value="1.37395361217112" />
+      <inertia 
+        ixx="0.0012611377675871" ixy="6.20444602774631E-06" ixz="-3.37574295664308E-06"
+        iyy="0.00335510243014406" iyz="-2.93209230303474E-06" izz="0.00440259268070832" 
+      />
+    </inertial>
+  </link>
+
+  <link name="imu_link">
+    <inertial>
+      <origin xyz="-0.000852421208410642 0.000930673036224633 -0.00585873311643903" rpy="0 0 0" />
+      <mass value="0.00107506631793989" />
+      <inertia 
+        ixx="9.27101999048947E-08" ixy="8.24889100734976E-09" ixz="-4.95661507296469E-09"
+        iyy="1.04653801684399E-07" iyz="-4.4711357373585E-10" izz="1.85971714401038E-07" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="-0.01 -0.0045 0.0105" rpy="0 0 1.5708" />
+    <parent link="base_link_old" />
+    <child link="imu_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0.000335915724914771 -0.0163398808555602 0.00724345035818252" rpy="0 0 0" />
+      <mass value="0.716026720412216" />
+      <inertia 
+        ixx="0.0009585426186399" ixy="3.34669620796088E-10" ixz="6.92098969633624E-08"
+        iyy="0.00087905898945126" iyz="8.44119865059195E-08" izz="0.000969424993395087" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0.0020123 0 -0.0755" rpy="-3.1416 0 3.1416" />
+    <parent link="imu_link" />
+    <child link="lidar_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="stereo_L_link">
+    <inertial>
+      <origin xyz="-0.000121829706406368 -0.000248731751993692 0.0238666620919455" rpy="0 0 0" />
+      <mass value="0.0349420486629625" />
+      <inertia 
+        ixx="5.46674773484273E-06" ixy="7.6750930147375E-09" ixz="3.04454567786081E-08"
+        iyy="5.51803294829868E-06" iyz="-1.43170398641432E-08" izz="4.97384500115464E-06" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="stereo_L_joint" type="fixed">
+    <origin xyz="0.037 0.125 0.02" rpy="0 0 -1.5708" />
+    <parent link="imu_link" />
+    <child link="stereo_L_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="stereo_L_optical_link">
+    <inertial>
+      <origin xyz="-0.000332872856410316 -0.000154246168479144 -0.013936798424466" rpy="0 0 0" />
+      <mass value="0.0274787532590208" />
+      <inertia 
+        ixx="4.56813413413367E-06" ixy="3.08806311217096E-09" ixz="8.27082010492213E-09"
+        iyy="4.59846820792163E-06" iyz="-2.23779005853699E-09" izz="3.52288953179095E-06" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="stereo_L_optical_joint" type="fixed">
+    <origin xyz="0 0 0.044738" rpy="1.5708 0 0" />
+    <parent link="stereo_L_link" />
+    <child link="stereo_L_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="stereo_R_link">
+    <inertial>
+      <origin xyz="-0.000121829722356553 -0.00024873175100959 0.0238666621027387" rpy="0 0 0" />
+      <mass value="0.0349420485407929" />
+      <inertia 
+        ixx="5.46674773393537E-06" ixy="7.67509275382277E-09" ixz="3.04454639359398E-08"
+        iyy="5.51803292652301E-06" iyz="-1.43170407194337E-08" izz="4.97384498804384E-06" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="stereo_R_joint" type="fixed">
+    <origin xyz="0.037 -0.125 0.02" rpy="0 0 -1.5708" />
+    <parent link="imu_link" />
+    <child link="stereo_R_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="stereo_R_optical_link">
+    <inertial>
+      <origin xyz="-0.000332872856410385 -0.000154246168479144 -0.0139367984258942" rpy="0 0 0" />
+      <mass value="0.0274787532590208" />
+      <inertia 
+        ixx="4.56813413413366E-06" ixy="3.0880631121726E-09" ixz="8.2708201049268E-09"
+        iyy="4.59846820792164E-06" iyz="-2.23779005855254E-09" izz="3.52288953179094E-06" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="stereo_R_optical_joint" type="fixed">
+    <origin xyz="0 0 0.044738" rpy="1.5708 0 0" />
+    <parent link="stereo_R_link" />
+    <child link="stereo_R_optical_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <link name="multispectral_link">
+    <inertial>
+      <origin xyz="-0.00235181652518906 -0.00213990985601997 -0.0161747276042653" rpy="0 0 0" />
+      <mass value="0.0684319653730161" />
+      <inertia 
+        ixx="1.55310456313514E-05" ixy="-1.10174669258487E-06" ixz="2.42151576557665E-06"
+        iyy="2.53073408144868E-05" iyz="1.13395071624786E-06" izz="2.85862210599383E-05" 
+      />
+    </inertial>
+  </link>
+
+  <joint name="multispectral_joint" type="fixed">
+    <origin xyz="-0.015 0.05 0.1005" rpy="-1.5708 0 0" />
+    <parent link="imu_link" />
+    <child link="multispectral_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+</robot>
