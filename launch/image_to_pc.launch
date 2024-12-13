@@ -1,5 +1,4 @@
 <!--Launch file to run the data_association.py script-->
 <launch>
-    <node pkg="toh_detector" type="data_association
-    .py" name="image_to_pc" output="screen"/>
+    <node pkg="toh_detector" type="data_association.py" name="image_to_pc" output="screen"/>
 </launch>

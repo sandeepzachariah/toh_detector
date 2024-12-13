@@ -1,0 +1,6 @@
+<!--Launch file to launch rosbag_play.launch, tf_publish.launch and velodyne msg to pc converter-->
+<launch>
+    <include file="$(find toh_detector)/launch/rosbag_play.launch"/>
+    <include file="$(find toh_detector)/launch/tf_publish.launch"/>
+    <include file="$(find velodyne_pointcloud)/launch/VLP-32C_points.launch"/>
+</launch>

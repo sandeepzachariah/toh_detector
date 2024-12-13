@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
+import open3d as o3d
 from sensor_msgs.msg import Image, PointCloud2, CameraInfo
 import tf2_ros
 import tf2_geometry_msgs
@@ -33,17 +34,19 @@ class PixelToPointMapper:
         self.camera_info_received = False
 
         # Get pixel coordinates from parameters or set default values
-        self.given_u = rospy.get_param('~pixel_u', 1500)
-        self.given_v = rospy.get_param('~pixel_v', 1500)
+        self.given_u = rospy.get_param('~pixel_u', 500)
+        self.given_v = rospy.get_param('~pixel_v', 500)
 
         self.camera_matrix = None
         self.dist_coeffs = None
 
+        # Output file for saving point cloud
+        self.output_pc_filename = rospy.get_param('~output_filename', '/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt')
+        self.image_filename = rospy.get_param('~image_filename', '/home/robot_ai/CMU/lab/src/toh_detector/temp/image.png')
+
     def image_callback(self, msg):
-        # Optional: Process the image if needed
         self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         # save the image to the temp folder
-        cv2.imwrite('/tmp/image.png', self.image)
         #print("Resolution (pixels) of the image: ", self.image.shape[0]*self.image.shape[1])
 
         #rospy.loginfo("Image received.")
@@ -125,19 +128,34 @@ class PixelToPointMapper:
             
         rospy.loginfo("Number of points inside the image: %d", no_points_inside_image)
         if point_found:
+            self.pointcloud_saver(msg)
             rospy.loginfo("Corresponding 3D point at pixel (%d, %d): x=%f, y=%f, z=%f with distance %f",
                           self.given_u, self.given_v,
                           corresponding_point[0], corresponding_point[1], corresponding_point[2], min_distance)
-            self.visualize()
+            
             # visualize the point cloud
             # transform the point back to the camera frame
             localized_point_lidar = np.dot(np.linalg.inv(transform_mat), np.array([corresponding_point[0], corresponding_point[1], corresponding_point[2], 1.0]))
+            self.visualize(corresponding_point)
             self.publish_marker(localized_point_lidar[0], localized_point_lidar[1], localized_point_lidar[2])
             is_point_in_pc = self.cross_check_point_in_pc(points_in_camera_frame, corresponding_point)
             print("Is the point in the point cloud? ", is_point_in_pc)
+            
             return 
         else:
             rospy.logwarn("No corresponding 3D point found for pixel (%d, %d).", self.given_u, self.given_v)
+
+    def pointcloud_saver(self, cloud_msg):
+        # Convert from PointCloud2 message to iterable of points
+        points = pc2.read_points(cloud_msg, field_names=("x", "y", "z"), skip_nans=True)
+        
+        # Write points to file in ASCII format: x y z
+        with open(self.output_pc_filename, 'w') as f:
+            for p in points:
+                f.write("{:.6f} {:.6f} {:.6f}\n".format(p[0], p[1], p[2]))
+        
+        rospy.loginfo("Pointcloud saved to %s" % self.output_pc_filename)
+
 
     def transform_to_matrix(self, transform):
         # Convert geometry_msgs/Transform to a 4x4 transformation matrix
@@ -151,17 +169,44 @@ class PixelToPointMapper:
         return transform_mat
 
     # function to visualze the image and the point cloud with the corresponding pixel and point marked
-    def visualize(self):
+    def visualize(self, point):
         if self.image is not None:
             image = self.image.copy()
             cv2.circle(image, (self.given_u, self.given_v), 5, (0, 0, 255), -1)
             # set the image window size
-            cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
-            cv2.imshow("Image", image)
-            cv2.waitKey(0)
+            # save the image 
+            cv2.imwrite(self.image_filename, image)
         else:
             rospy.logwarn("No image received yet.")
         
+        # plot the point cloud
+        pcd = o3d.io.read_point_cloud("/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt", format='xyz')
+        highlighted_pcd, highlight_location = self.highlight_point_in_cloud(pcd, point)
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.3)
+        sphere.translate(highlight_location)
+        sphere.paint_uniform_color([1.0, 0.0, 0.0])  # Red sphere
+
+        # Visualize
+        o3d.visualization.draw_geometries([highlighted_pcd, sphere])
+        return
+
+    def highlight_point_in_cloud(self, pcd, query_point, highlight_color=[1.0, 1.0, 1.0]):
+        # Build a KD-tree for fast nearest-neighbor search
+        pcd_tree = o3d.geometry.KDTreeFlann(pcd)
+
+        # Query for the nearest neighbor
+        [k, idx, _] = pcd_tree.search_knn_vector_3d(query_point, 1)
+        # initialize the color array with blue color
+        pcd.colors = o3d.utility.Vector3dVector(np.array([[0.0, 0.0, 1.0] for _ in range(len(pcd.points))]))
+        if k > 0:
+            # idx[0] is the index of the closest point
+            highlight_location = pcd.points[idx[0]]
+        else:
+            print("No nearest point found.")
+
+        return pcd, highlight_location  
+
+
     def cross_check_point_in_pc(self, points, point):
         # function to cross check if the point is in the point cloud
         for pt in points:
