@@ -42,19 +42,19 @@ class PixelToPointMapper:
         self.camera_info_received = False
 
         # Get pixel coordinates from parameters or set default values
-        self.given_u = rospy.get_param('~pixel_u', 500)
-        self.given_v = rospy.get_param('~pixel_v', 500)
+        self.given_u = rospy.get_param('~pixel_u', 1224)
+        self.given_v = rospy.get_param('~pixel_v', 1024)
 
         self.camera_matrix = None
         self.dist_coeffs = None
 
         # Output file for saving point cloud
         self.output_pc_filename = rospy.get_param('~output_filename', \
-            '/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt')
+            '/home/uav/catkin_ws/src/toh_detector/temp/pointcloud.txt')
         self.image_filename = rospy.get_param('~image_filename', \
-            '/home/robot_ai/CMU/lab/src/toh_detector/temp/image.png')
+            '/home/uav/catkin_ws/src/toh_detector/temp/image.png')
         self.image_all_pts_filename = rospy.get_param('~image_all_pts_filename', \
-            '/home/robot_ai/CMU/lab/src/toh_detector/temp/image_all_pts.png')
+            '/home/uav/catkin_ws/src/toh_detector/temp/image_all_pts.png')
 
     def image_callback(self, msg):
         """Callback function for the image subscriber.
@@ -233,7 +233,8 @@ class PixelToPointMapper:
             rospy.logwarn("No image received yet.")
         
         # plot the point cloud
-        pcd = o3d.io.read_point_cloud("/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt", format='xyz')
+        pcd = o3d.io.read_point_cloud("/home/uav/catkin_ws/src/toh_detector/temp/pointcloud.txt", format='xyz')
+        point = point[:3]
         highlighted_pcd, highlight_location = self.highlight_point_in_cloud(pcd, point)
         sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.3)
         sphere.translate(highlight_location)

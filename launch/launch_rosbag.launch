@@ -2,5 +2,7 @@
 <launch>
     <include file="$(find toh_detector)/launch/rosbag_play.launch"/>
     <include file="$(find toh_detector)/launch/tf_publish.launch"/>
-    <include file="$(find velodyne_pointcloud)/launch/VLP-32C_points.launch"/>
+    <include file="$(find velodyne_pointcloud)/launch/VLP-32C_points.launch">
+        <param name="rosconsole_logger_level" value="error" />
+    </include>
 </launch>
