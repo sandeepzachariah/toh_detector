@@ -14,13 +14,21 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 
 class PixelToPointMapper:
+    """Class to map a pixel coordinate to a 3D point in the point cloud.
+    """
+
     def __init__(self):
+        """Default constructor.
+        """
         rospy.init_node('pixel_to_point_mapper', anonymous=True)
 
         # Subscribers
-        self.image_sub = rospy.Subscriber('/left/camera/image_raw', Image, self.image_callback)
-        self.cam_info_sub = rospy.Subscriber('/left/camera/camera_info', CameraInfo, self.camera_info_callback)
-        self.pointcloud_sub = rospy.Subscriber('/velodyne_points', PointCloud2, self.pointcloud_callback)
+        self.image_sub = rospy.Subscriber('/left/camera/image_raw', \
+                                        Image, self.image_callback)
+        self.cam_info_sub = rospy.Subscriber('/left/camera/camera_info', \
+                                    CameraInfo, self.camera_info_callback)
+        self.pointcloud_sub = rospy.Subscriber('/velodyne_points', PointCloud2, \
+                                                self.pointcloud_callback)
 
         # Publisher 
         self.pub = rospy.Publisher('/highlighted_point', Marker, queue_size=10)
@@ -41,17 +49,28 @@ class PixelToPointMapper:
         self.dist_coeffs = None
 
         # Output file for saving point cloud
-        self.output_pc_filename = rospy.get_param('~output_filename', '/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt')
-        self.image_filename = rospy.get_param('~image_filename', '/home/robot_ai/CMU/lab/src/toh_detector/temp/image.png')
+        self.output_pc_filename = rospy.get_param('~output_filename', \
+            '/home/robot_ai/CMU/lab/src/toh_detector/temp/pointcloud.txt')
+        self.image_filename = rospy.get_param('~image_filename', \
+            '/home/robot_ai/CMU/lab/src/toh_detector/temp/image.png')
+        self.image_all_pts_filename = rospy.get_param('~image_all_pts_filename', \
+            '/home/robot_ai/CMU/lab/src/toh_detector/temp/image_all_pts.png')
 
     def image_callback(self, msg):
-        self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        # save the image to the temp folder
-        #print("Resolution (pixels) of the image: ", self.image.shape[0]*self.image.shape[1])
+        """Callback function for the image subscriber.
 
-        #rospy.loginfo("Image received.")
+        Args:
+            msg (sensor_msgs.msg.Image): Image message
+        """
+        self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
     def camera_info_callback(self, msg):
+        """Callback function for the camera info subscriber.
+        Sets the camera matrix and distortion coefficients.
+
+        Args:
+            msg (sensor_msgs.msg.CameraInfo): Camera info message
+        """
         if not self.camera_info_received:
             # Extract camera intrinsic parameters
             self.camera_matrix = np.array(msg.K).reshape((3, 3))
@@ -60,8 +79,20 @@ class PixelToPointMapper:
             rospy.loginfo("Camera info received.")
 
     def pointcloud_callback(self, msg):
+        """Callback function for point cloud subscriber.
+        Triggers the pixel-to-point mapping.
+
+        Args:
+            msg (sensor_msgs.msg.PointCloud2): Point cloud message
+        """
+        # Check if camera info is received
         if not self.camera_info_received:
             rospy.logwarn("Camera info not received yet.")
+            return
+        
+        # Check if image is received
+        if self.image is None:
+            rospy.logwarn("Image not received yet.")
             return
 
         # Transform the point cloud to the camera frame
@@ -71,7 +102,8 @@ class PixelToPointMapper:
 
         try:
             # Get the transform from the lidar frame to the camera frame
-            transform_stamped = self.tf_buffer.lookup_transform(target_frame, source_frame, rospy.Time(0), rospy.Duration(1.0))
+            transform_stamped = self.tf_buffer.lookup_transform(target_frame, \
+                            source_frame, rospy.Time(0), rospy.Duration(1.0))
         except (tf2_ros.LookupException, tf2_ros.ExtrapolationException) as ex:
             rospy.logwarn("Transform lookup failed: %s", ex)
             return
@@ -104,13 +136,15 @@ class PixelToPointMapper:
         object_points = np.array(points_in_camera_frame)
         rvec = np.zeros((3, 1))
         tvec = np.zeros((3, 1))
-        image_points, _ = cv2.projectPoints(object_points, rvec, tvec, self.camera_matrix, self.dist_coeffs)
+        image_points, _ = cv2.projectPoints(object_points, rvec, tvec, \
+                                    self.camera_matrix, self.dist_coeffs)
 
         # Find the 3D point corresponding to the given pixel coordinates
         min_distance = 100
         corresponding_point = None
         point_found = False
         no_points_inside_image = 0
+        points_inside_image = []
         for idx, img_pt in enumerate(image_points):
             x = int(round(img_pt[0][0]))
             y = int(round(img_pt[0][1]))
@@ -120,6 +154,7 @@ class PixelToPointMapper:
             if x < 0 or x >= self.image.shape[1] or y < 0 or y >= self.image.shape[0]:
                 continue
             no_points_inside_image += 1
+            points_inside_image.append((x, y))
             distance = np.sqrt((x - self.given_u)**2 + (y - self.given_v)**2)
             if distance < min_distance:
                 min_distance = distance
@@ -127,6 +162,11 @@ class PixelToPointMapper:
                 point_found = True
             
         rospy.loginfo("Number of points inside the image: %d", no_points_inside_image)
+
+        #TODO: Visualize all the points that are inside the image
+        # visualize the points that are inside the image
+        self.visualize_points_inside_image(points_inside_image)
+
         if point_found:
             self.pointcloud_saver(msg)
             rospy.loginfo("Corresponding 3D point at pixel (%d, %d): x=%f, y=%f, z=%f with distance %f",
@@ -136,7 +176,7 @@ class PixelToPointMapper:
             # visualize the point cloud
             # transform the point back to the camera frame
             localized_point_lidar = np.dot(np.linalg.inv(transform_mat), np.array([corresponding_point[0], corresponding_point[1], corresponding_point[2], 1.0]))
-            self.visualize(corresponding_point)
+            self.visualize(localized_point_lidar)
             self.publish_marker(localized_point_lidar[0], localized_point_lidar[1], localized_point_lidar[2])
             is_point_in_pc = self.cross_check_point_in_pc(points_in_camera_frame, corresponding_point)
             print("Is the point in the point cloud? ", is_point_in_pc)
@@ -167,6 +207,19 @@ class PixelToPointMapper:
 
         transform_mat = np.dot(trans_mat, rot_mat)
         return transform_mat
+
+    def visualize_points_inside_image(self, points):
+        # function to visualize the points that are inside the image
+        if self.image is not None:
+            image = self.image.copy()
+            for pt in points:
+                cv2.circle(image, pt, 5, (0, 255, 0), -1)
+            # set the image window size
+            # save the image 
+            cv2.imwrite(self.image_all_pts_filename, image)
+        else:
+            rospy.logwarn("No image received yet.")
+        return
 
     # function to visualze the image and the point cloud with the corresponding pixel and point marked
     def visualize(self, point):
