@@ -1,0 +1,3 @@
+/mnt/a2264587-7099-4f7b-85e9-8e5fdc6b61db/stabilizer/cic_lab_dec18/2024_12_18/collect_02/raw/orin_data_1969-12-31-19-08-30_0.bag
+/mnt/a2264587-7099-4f7b-85e9-8e5fdc6b61db/stabilizer/cic_lab_dec18/2024_12_18/collect_02/raw/orin_data_1969-12-31-19-08-46_1.bag
+

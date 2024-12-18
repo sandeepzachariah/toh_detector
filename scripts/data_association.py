@@ -47,6 +47,7 @@ class PixelToPointMapper:
 
         self.camera_matrix = None
         self.dist_coeffs = None
+        self.image = None
 
         # Output file for saving point cloud
         self.output_pc_filename = rospy.get_param('~output_filename', \
@@ -135,7 +136,9 @@ class PixelToPointMapper:
         # Project 3D points onto the image plane
         object_points = np.array(points_in_camera_frame)
         rvec = np.zeros((3, 1))
+        rvec = np.array([0.0, 0.0, 3.1417])
         tvec = np.zeros((3, 1))
+        tvec = np.array([0.20, -0.2, 0.0])
         image_points, _ = cv2.projectPoints(object_points, rvec, tvec, \
                                     self.camera_matrix, self.dist_coeffs)
 
@@ -236,7 +239,7 @@ class PixelToPointMapper:
         pcd = o3d.io.read_point_cloud("/home/uav/catkin_ws/src/toh_detector/temp/pointcloud.txt", format='xyz')
         point = point[:3]
         highlighted_pcd, highlight_location = self.highlight_point_in_cloud(pcd, point)
-        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.3)
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.05    )
         sphere.translate(highlight_location)
         sphere.paint_uniform_color([1.0, 0.0, 0.0])  # Red sphere
 
